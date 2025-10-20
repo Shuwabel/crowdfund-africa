@@ -1,8 +1,11 @@
+"use client"
+
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { CheckCircle2 } from "lucide-react"
 import Link from "next/link"
+import { useState, useEffect } from "react"
 
 const featuredCampaigns = [
   {
@@ -13,7 +16,7 @@ const featuredCampaigns = [
     image: "/campaign-water-well.jpg",
     raised: 2500000,
     goal: 5000000,
-    category: "Community",
+    category: "community",
     supporters: 1234,
   },
   {
@@ -24,12 +27,76 @@ const featuredCampaigns = [
     image: "/campaign-school-supplies.jpg",
     raised: 850000,
     goal: 1200000,
-    category: "Education",
+    category: "education",
     supporters: 456,
+  },
+  {
+    id: 3,
+    title: "Emergency Medical Fund",
+    creator: "Health Care Foundation",
+    verified: true,
+    image: "/campaign-medical.jpg",
+    raised: 1200000,
+    goal: 2000000,
+    category: "health",
+    supporters: 789,
+  },
+  {
+    id: 4,
+    title: "Small Business Startup Fund",
+    creator: "Entrepreneur Support Group",
+    verified: false,
+    image: "/campaign-farming.jpg",
+    raised: 450000,
+    goal: 1000000,
+    category: "business",
+    supporters: 234,
   },
 ]
 
-export function FeaturedCampaigns() {
+interface FeaturedCampaignsProps {
+  category?: string
+  search?: string
+}
+
+export function FeaturedCampaigns({ category, search }: FeaturedCampaignsProps) {
+  const [filteredCampaigns, setFilteredCampaigns] = useState(featuredCampaigns)
+
+  useEffect(() => {
+    let filtered = featuredCampaigns
+
+    // Filter by category
+    if (category && category !== 'all') {
+      filtered = filtered.filter(campaign => 
+        campaign.category.toLowerCase() === category.toLowerCase()
+      )
+    }
+
+    // Filter by search query
+    if (search && search.trim()) {
+      const searchLower = search.toLowerCase()
+      filtered = filtered.filter(campaign =>
+        campaign.title.toLowerCase().includes(searchLower) ||
+        campaign.creator.toLowerCase().includes(searchLower) ||
+        campaign.category.toLowerCase().includes(searchLower)
+      )
+    }
+
+    setFilteredCampaigns(filtered)
+  }, [category, search])
+
+  if (filteredCampaigns.length === 0) {
+    return (
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-foreground">Featured Campaigns</h2>
+        </div>
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">No campaigns found matching your criteria.</p>
+        </div>
+      </section>
+    )
+  }
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between">
@@ -40,7 +107,7 @@ export function FeaturedCampaigns() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {featuredCampaigns.map((campaign) => {
+        {filteredCampaigns.map((campaign) => {
           const progress = (campaign.raised / campaign.goal) * 100
           return (
             <Link key={campaign.id} href={`/campaign/${campaign.id}`}>

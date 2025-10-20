@@ -1,8 +1,11 @@
+"use client"
+
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
 import { CheckCircle2, TrendingUp } from "lucide-react"
 import Link from "next/link"
+import { useState, useEffect } from "react"
 
 const trendingCampaigns = [
   {
@@ -13,7 +16,7 @@ const trendingCampaigns = [
     image: "/campaign-medical.jpg",
     raised: 1800000,
     goal: 3000000,
-    category: "Health",
+    category: "health",
     supporters: 892,
     trending: true,
   },
@@ -25,7 +28,7 @@ const trendingCampaigns = [
     image: "/campaign-farming.jpg",
     raised: 450000,
     goal: 800000,
-    category: "Business",
+    category: "business",
     supporters: 234,
     trending: true,
   },
@@ -37,7 +40,7 @@ const trendingCampaigns = [
     image: "/campaign-community.jpg",
     raised: 3200000,
     goal: 5000000,
-    category: "Emergency",
+    category: "emergency",
     supporters: 1567,
     trending: true,
   },
@@ -49,13 +52,56 @@ const trendingCampaigns = [
     image: "/campaign-scholarship.jpg",
     raised: 2100000,
     goal: 4000000,
-    category: "Education",
+    category: "education",
     supporters: 678,
     trending: true,
   },
 ]
 
-export function TrendingCampaigns() {
+interface TrendingCampaignsProps {
+  category?: string
+  search?: string
+}
+
+export function TrendingCampaigns({ category, search }: TrendingCampaignsProps) {
+  const [filteredCampaigns, setFilteredCampaigns] = useState(trendingCampaigns)
+
+  useEffect(() => {
+    let filtered = trendingCampaigns
+
+    // Filter by category
+    if (category && category !== 'all') {
+      filtered = filtered.filter(campaign => 
+        campaign.category.toLowerCase() === category.toLowerCase()
+      )
+    }
+
+    // Filter by search query
+    if (search && search.trim()) {
+      const searchLower = search.toLowerCase()
+      filtered = filtered.filter(campaign =>
+        campaign.title.toLowerCase().includes(searchLower) ||
+        campaign.creator.toLowerCase().includes(searchLower) ||
+        campaign.category.toLowerCase().includes(searchLower)
+      )
+    }
+
+    setFilteredCampaigns(filtered)
+  }, [category, search])
+
+  if (filteredCampaigns.length === 0) {
+    return (
+      <section className="space-y-4">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="h-6 w-6 text-primary" />
+          <h2 className="text-2xl font-bold text-foreground">Trending Now</h2>
+        </div>
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">No trending campaigns found matching your criteria.</p>
+        </div>
+      </section>
+    )
+  }
   return (
     <section className="space-y-4">
       <div className="flex items-center gap-2">
@@ -64,7 +110,7 @@ export function TrendingCampaigns() {
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {trendingCampaigns.map((campaign) => {
+        {filteredCampaigns.map((campaign) => {
           const progress = (campaign.raised / campaign.goal) * 100
           return (
             <Link key={campaign.id} href={`/campaign/${campaign.id}`}>

@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Heart, GraduationCap, Briefcase, Users, AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { useRouter, useSearchParams } from "next/navigation"
 
 const categories = [
   { id: "all", label: "All", icon: null },
@@ -14,7 +15,19 @@ const categories = [
 ]
 
 export function CategoryTabs() {
-  const [activeCategory, setActiveCategory] = useState("all")
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const activeCategory = searchParams.get('category') || 'all'
+
+  const handleCategoryChange = (categoryId: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (categoryId === 'all') {
+      params.delete('category')
+    } else {
+      params.set('category', categoryId)
+    }
+    router.push(`/explore?${params.toString()}`)
+  }
 
   return (
     <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
@@ -25,7 +38,7 @@ export function CategoryTabs() {
             key={category.id}
             variant={activeCategory === category.id ? "default" : "outline"}
             className="flex-shrink-0 rounded-xl"
-            onClick={() => setActiveCategory(category.id)}
+            onClick={() => handleCategoryChange(category.id)}
           >
             {Icon && <Icon className="mr-2 h-4 w-4" />}
             {category.label}

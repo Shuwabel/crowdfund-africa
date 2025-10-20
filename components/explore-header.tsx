@@ -7,9 +7,25 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
+import { useRouter, useSearchParams } from "next/navigation"
+import { useState, useEffect } from "react"
 
 export function ExploreHeader() {
   const { user, signOut } = useAuth()
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '')
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    const params = new URLSearchParams(searchParams.toString())
+    if (searchQuery.trim()) {
+      params.set('search', searchQuery.trim())
+    } else {
+      params.delete('search')
+    }
+    router.push(`/explore?${params.toString()}`)
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/80">
@@ -26,10 +42,16 @@ export function ExploreHeader() {
           </Link>
         </div>
 
-        <div className="relative flex-1 max-w-md">
+        <form onSubmit={handleSearch} className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input type="search" placeholder="Find causes to support..." className="w-full rounded-xl pl-10 pr-4" />
-        </div>
+          <Input 
+            type="search" 
+            placeholder="Find causes to support..." 
+            className="w-full rounded-xl pl-10 pr-4" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </form>
 
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" className="relative">
