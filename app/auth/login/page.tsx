@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
+import { createBrowserClient } from '@supabase/ssr'
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -26,22 +27,19 @@ export default function LoginPage() {
     setError("")
 
     try {
-      const response = await fetch('/api/auth', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          action: 'signin',
-          email,
-          password
-        })
+      // Use browser client for direct login
+      const supabase = createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      )
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
       })
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message)
+      if (error) {
+        throw new Error(error.message)
       }
 
       // Refresh the auth context to sync with server session
