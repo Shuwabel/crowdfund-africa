@@ -99,8 +99,7 @@ export async function middleware(request: NextRequest) {
   // Protect API routes that require authentication
   if (request.nextUrl.pathname.startsWith('/api/campaigns/manage') ||
       request.nextUrl.pathname.startsWith('/api/donations') ||
-      request.nextUrl.pathname.startsWith('/api/comments') ||
-      request.nextUrl.pathname.startsWith('/api/auth')) {
+      request.nextUrl.pathname.startsWith('/api/comments')) {
     
     if (!user) {
       return NextResponse.json(

@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase, supabaseAdmin } from './supabase'
 import { Profile } from './types'
 
 export interface AuthUser {
@@ -61,6 +61,20 @@ export async function signUp(email: string, password: string, fullName: string) 
 
     if (profileError) {
       console.error('Error creating profile:', profileError)
+    }
+
+    // Since email verification is disabled, we need to confirm the user manually
+    // This is a workaround for development - in production you'd want proper email verification
+    try {
+      const { error: confirmError } = await supabaseAdmin.auth.admin.updateUserById(
+        data.user.id,
+        { email_confirm: true }
+      )
+      if (confirmError) {
+        console.error('Error confirming user:', confirmError)
+      }
+    } catch (confirmError) {
+      console.error('Error confirming user (admin function not available):', confirmError)
     }
   }
 
