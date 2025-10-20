@@ -7,6 +7,7 @@ interface StepPreviewProps {
     title: string
     category: string
     story: string
+    images: string[]
     goal: string
     duration: string
     accountName: string
@@ -25,15 +26,54 @@ export function StepPreview({ formData }: StepPreviewProps) {
       </div>
 
       <Card className="overflow-hidden rounded-2xl border-2">
-        <div className="relative h-48 bg-gradient-to-br from-primary/30 to-accent/30">
+        {/* Campaign Image/Header */}
+        <div className="relative h-48 overflow-hidden">
+          {formData.images && formData.images.length > 0 ? (
+            <img
+              src={formData.images[0]}
+              alt={formData.title || "Campaign image"}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="h-full w-full bg-gradient-to-br from-primary/30 to-accent/30" />
+          )}
           <Badge className="absolute left-4 top-4 rounded-lg bg-card/90 text-card-foreground backdrop-blur">
             {formData.category || "Category"}
           </Badge>
         </div>
+        
         <div className="space-y-4 p-6">
           <h3 className="text-balance text-2xl font-bold leading-tight text-foreground">
             {formData.title || "Campaign Title"}
           </h3>
+          
+          {/* Campaign Story */}
+          {formData.story && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold text-foreground">Story</h4>
+              <p className="text-sm leading-relaxed text-muted-foreground line-clamp-3">
+                {formData.story}
+              </p>
+            </div>
+          )}
+
+          {/* Additional Images */}
+          {formData.images && formData.images.length > 1 && (
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold text-foreground">Additional Images</h4>
+              <div className="grid grid-cols-2 gap-2">
+                {formData.images.slice(1).map((url, index) => (
+                  <img
+                    key={index}
+                    src={url}
+                    alt={`Campaign image ${index + 2}`}
+                    className="h-20 w-full rounded-lg object-cover"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+          
           <div className="space-y-3 rounded-xl bg-muted/50 p-4">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">Goal</span>
