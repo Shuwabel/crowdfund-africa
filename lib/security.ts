@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server'
 import { RateLimiter } from './error-handling'
 
 // Rate limiters for different endpoints
-export const authRateLimiter = new RateLimiter(5, 15 * 60 * 1000) // 5 requests per 15 minutes
+export const authRateLimiter = new RateLimiter(20, 15 * 60 * 1000) // 20 requests per 15 minutes (more lenient for development)
 export const donationRateLimiter = new RateLimiter(10, 60 * 1000) // 10 requests per minute
 export const commentRateLimiter = new RateLimiter(20, 60 * 1000) // 20 requests per minute
 export const generalRateLimiter = new RateLimiter(100, 60 * 1000) // 100 requests per minute

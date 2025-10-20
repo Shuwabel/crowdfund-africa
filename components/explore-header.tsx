@@ -54,9 +54,11 @@ export function ExploreHeader() {
         </form>
 
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="relative">
-            <Bell className="h-5 w-5" />
-            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive" />
+          <Button variant="ghost" size="icon" className="relative" asChild>
+            <Link href="/notifications">
+              <Bell className="h-5 w-5" />
+              <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive" />
+            </Link>
           </Button>
           
           {user ? (

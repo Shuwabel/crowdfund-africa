@@ -51,7 +51,8 @@ export async function signUp(email: string, password: string, fullName: string) 
 
   if (data.user && !error) {
     // Create profile immediately since we're not using email verification
-    const { error: profileError } = await supabase
+    // Use admin client to bypass RLS policies
+    const { error: profileError } = await supabaseAdmin
       .from('profiles')
       .insert({ 
         id: data.user.id, 
