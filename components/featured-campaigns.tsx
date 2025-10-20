@@ -3,56 +3,10 @@
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { CheckCircle2 } from "lucide-react"
+import { CheckCircle2, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect } from "react"
-
-const featuredCampaigns = [
-  {
-    id: 1,
-    title: "Clean Water for Rural Communities",
-    creator: "Water for Life Foundation",
-    verified: true,
-    image: "/campaign-water-well.jpg",
-    raised: 2500000,
-    goal: 5000000,
-    category: "community",
-    supporters: 1234,
-  },
-  {
-    id: 2,
-    title: "School Supplies for 500 Children",
-    creator: "Education First Initiative",
-    verified: true,
-    image: "/campaign-school-supplies.jpg",
-    raised: 850000,
-    goal: 1200000,
-    category: "education",
-    supporters: 456,
-  },
-  {
-    id: 3,
-    title: "Emergency Medical Fund",
-    creator: "Health Care Foundation",
-    verified: true,
-    image: "/campaign-medical.jpg",
-    raised: 1200000,
-    goal: 2000000,
-    category: "health",
-    supporters: 789,
-  },
-  {
-    id: 4,
-    title: "Small Business Startup Fund",
-    creator: "Entrepreneur Support Group",
-    verified: false,
-    image: "/campaign-farming.jpg",
-    raised: 450000,
-    goal: 1000000,
-    category: "business",
-    supporters: 234,
-  },
-]
+import { Campaign } from "@/lib/types"
 
 interface FeaturedCampaignsProps {
   category?: string
@@ -60,32 +14,74 @@ interface FeaturedCampaignsProps {
 }
 
 export function FeaturedCampaigns({ category, search }: FeaturedCampaignsProps) {
-  const [filteredCampaigns, setFilteredCampaigns] = useState(featuredCampaigns)
+  const [campaigns, setCampaigns] = useState<Campaign[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    let filtered = featuredCampaigns
+    const fetchCampaigns = async () => {
+      try {
+        setLoading(true)
+        const params = new URLSearchParams()
+        
+        if (category && category !== 'all') {
+          params.set('category', category)
+        }
+        
+        if (search) {
+          params.set('search', search)
+        }
+        
+        params.set('featured', 'true')
+        params.set('limit', '6')
 
-    // Filter by category
-    if (category && category !== 'all') {
-      filtered = filtered.filter(campaign => 
-        campaign.category.toLowerCase() === category.toLowerCase()
-      )
+        const response = await fetch(`/api/campaigns?${params.toString()}`)
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch campaigns')
+        }
+        
+        const data = await response.json()
+        setCampaigns(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch campaigns')
+        console.error('Error fetching campaigns:', err)
+      } finally {
+        setLoading(false)
+      }
     }
 
-    // Filter by search query
-    if (search && search.trim()) {
-      const searchLower = search.toLowerCase()
-      filtered = filtered.filter(campaign =>
-        campaign.title.toLowerCase().includes(searchLower) ||
-        campaign.creator.toLowerCase().includes(searchLower) ||
-        campaign.category.toLowerCase().includes(searchLower)
-      )
-    }
-
-    setFilteredCampaigns(filtered)
+    fetchCampaigns()
   }, [category, search])
 
-  if (filteredCampaigns.length === 0) {
+  if (loading) {
+    return (
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-foreground">Featured Campaigns</h2>
+        </div>
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span className="ml-2 text-muted-foreground">Loading campaigns...</span>
+        </div>
+      </section>
+    )
+  }
+
+  if (error) {
+    return (
+      <section className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold text-foreground">Featured Campaigns</h2>
+        </div>
+        <div className="text-center py-8">
+          <p className="text-destructive">Error: {error}</p>
+        </div>
+      </section>
+    )
+  }
+
+  if (campaigns.length === 0) {
     return (
       <section className="space-y-4">
         <div className="flex items-center justify-between">
@@ -97,23 +93,34 @@ export function FeaturedCampaigns({ category, search }: FeaturedCampaignsProps) 
       </section>
     )
   }
+
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-foreground">Featured Campaigns</h2>
-        <Link href="/campaigns/featured" className="text-sm font-medium text-primary hover:underline">
+        <Link href="/explore?featured=true" className="text-sm font-medium text-primary hover:underline">
           View all
         </Link>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        {filteredCampaigns.map((campaign) => {
-          const progress = (campaign.raised / campaign.goal) * 100
+        {campaigns.map((campaign) => {
+          const progress = campaign.goal_amount > 0 ? (campaign.current_amount / campaign.goal_amount) * 100 : 0
+          const imageUrl = campaign.featured_image_url || (campaign.images && campaign.images.length > 0 ? campaign.images[0] : null)
+          
           return (
             <Link key={campaign.id} href={`/campaign/${campaign.id}`}>
               <Card className="group overflow-hidden rounded-2xl border-2 transition-all hover:border-primary hover:shadow-lg">
                 <div className="relative h-48 overflow-hidden bg-muted">
-                  <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20" />
+                  {imageUrl ? (
+                    <img
+                      src={imageUrl}
+                      alt={campaign.title}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-accent/20" />
+                  )}
                   <Badge className="absolute right-3 top-3 rounded-lg bg-card/90 text-card-foreground backdrop-blur">
                     {campaign.category}
                   </Badge>
@@ -125,19 +132,19 @@ export function FeaturedCampaigns({ category, search }: FeaturedCampaignsProps) 
                     </h3>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>by {campaign.creator}</span>
-                    {campaign.verified && <CheckCircle2 className="h-4 w-4 text-primary" />}
+                    <span>by {campaign.creator?.full_name || 'Anonymous'}</span>
+                    {campaign.is_verified && <CheckCircle2 className="h-4 w-4 text-primary" />}
                   </div>
                   <div className="space-y-2">
                     <Progress value={progress} className="h-2" />
                     <div className="flex items-baseline justify-between text-sm">
                       <div>
                         <span className="text-lg font-bold text-foreground">
-                          ₦{(campaign.raised / 1000).toFixed(0)}k
+                          ₦{(campaign.current_amount / 1000).toFixed(0)}k
                         </span>
-                        <span className="text-muted-foreground"> raised of ₦{(campaign.goal / 1000).toFixed(0)}k</span>
+                        <span className="text-muted-foreground"> raised of ₦{(campaign.goal_amount / 1000).toFixed(0)}k</span>
                       </div>
-                      <span className="text-muted-foreground">{campaign.supporters} supporters</span>
+                      <span className="text-muted-foreground">{campaign.supporters_count || 0} supporters</span>
                     </div>
                   </div>
                 </div>

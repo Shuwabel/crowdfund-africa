@@ -13,6 +13,7 @@ export async function getCampaigns(filters?: {
   status?: string
   category?: string
   featured?: boolean
+  search?: string
   limit?: number
   offset?: number
 }): Promise<CampaignWithCreator[]> {
@@ -34,6 +35,10 @@ export async function getCampaigns(filters?: {
 
   if (filters?.featured !== undefined) {
     query = query.eq('is_featured', filters.featured)
+  }
+
+  if (filters?.search) {
+    query = query.or(`title.ilike.%${filters.search}%,story.ilike.%${filters.search}%,description.ilike.%${filters.search}%`)
   }
 
   if (filters?.limit) {

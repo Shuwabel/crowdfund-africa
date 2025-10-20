@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status')
     const category = searchParams.get('category')
     const featured = searchParams.get('featured')
+    const search = searchParams.get('search')
     const limit = searchParams.get('limit')
     const offset = searchParams.get('offset')
 
@@ -23,13 +24,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(campaign)
     }
 
-    const campaigns = await getCampaigns({
-      status: status || undefined,
-      category: category || undefined,
-      featured: featured ? featured === 'true' : undefined,
-      limit: limit ? parseInt(limit) : undefined,
-      offset: offset ? parseInt(offset) : undefined
-    })
+        const campaigns = await getCampaigns({
+          status: status || undefined,
+          category: category || undefined,
+          featured: featured ? featured === 'true' : undefined,
+          search: search || undefined,
+          limit: limit ? parseInt(limit) : undefined,
+          offset: offset ? parseInt(offset) : undefined
+        })
 
     return NextResponse.json(campaigns)
   } catch (error) {
