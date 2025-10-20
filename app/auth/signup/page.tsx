@@ -9,6 +9,7 @@ import { Card } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { useAuth } from "@/lib/auth-context"
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
@@ -23,6 +24,7 @@ export default function SignupPage() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
   const router = useRouter()
+  const { refreshUser } = useAuth()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
@@ -68,6 +70,9 @@ export default function SignupPage() {
         throw new Error(data.message)
       }
 
+      // Refresh the auth context to sync with server session
+      await refreshUser()
+      
       setSuccess(true)
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Signup failed')
