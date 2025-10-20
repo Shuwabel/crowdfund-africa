@@ -1,6 +1,8 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/lib/auth-context"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
@@ -21,6 +23,9 @@ const steps = [
 
 export function CreateCampaignWizard() {
   const [currentStep, setCurrentStep] = useState(1)
+  const [submitting, setSubmitting] = useState(false)
+  const router = useRouter()
+  const { user } = useAuth()
   const [formData, setFormData] = useState({
     title: "",
     category: "",
@@ -50,6 +55,49 @@ export function CreateCampaignWizard() {
 
   const updateFormData = (data: Partial<typeof formData>) => {
     setFormData({ ...formData, ...data })
+  }
+
+  const submitCampaign = async () => {
+    if (!user) {
+      router.push('/auth/login')
+      return
+    }
+
+    // Basic validation
+    if (!formData.title || !formData.category || !formData.story || !formData.goal) {
+      alert('Please complete all required fields before publishing.')
+      return
+    }
+
+    try {
+      setSubmitting(true)
+      const response = await fetch('/api/campaigns', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: formData.title,
+          category: formData.category,
+          story: formData.story,
+          images: formData.images,
+          goal: Number(formData.goal),
+          duration: Number(formData.duration),
+          account_name: formData.accountName,
+          account_number: formData.accountNumber,
+          bank_name: formData.bankName,
+        })
+      })
+
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data?.message || 'Failed to create campaign')
+      }
+
+      router.push(`/campaign/${data?.campaign?.id || ''}`)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to publish campaign')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -84,10 +132,17 @@ export function CreateCampaignWizard() {
           <ChevronLeft className="mr-2 h-5 w-5" />
           Back
         </Button>
-        <Button size="lg" onClick={handleNext} disabled={currentStep === steps.length} className="rounded-xl">
-          {currentStep === steps.length ? "Publish Campaign" : "Continue"}
-          <ChevronRight className="ml-2 h-5 w-5" />
-        </Button>
+        {currentStep === steps.length ? (
+          <Button size="lg" onClick={submitCampaign} disabled={submitting} className="rounded-xl">
+            {submitting ? 'Publishing…' : 'Publish Campaign'}
+            <ChevronRight className="ml-2 h-5 w-5" />
+          </Button>
+        ) : (
+          <Button size="lg" onClick={handleNext} className="rounded-xl">
+            Continue
+            <ChevronRight className="ml-2 h-5 w-5" />
+          </Button>
+        )}
       </div>
     </div>
   )
