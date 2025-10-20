@@ -62,6 +62,9 @@ export type Database = {
           is_featured: boolean
           is_verified: boolean
           verification_notes: string | null
+          account_name: string | null
+          account_number: string | null
+          bank_name: string | null
           created_at: string
           updated_at: string
         }
@@ -84,6 +87,9 @@ export type Database = {
           is_featured?: boolean
           is_verified?: boolean
           verification_notes?: string | null
+          account_name?: string | null
+          account_number?: string | null
+          bank_name?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -106,6 +112,9 @@ export type Database = {
           is_featured?: boolean
           is_verified?: boolean
           verification_notes?: string | null
+          account_name?: string | null
+          account_number?: string | null
+          bank_name?: string | null
           created_at?: string
           updated_at?: string
         }

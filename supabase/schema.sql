@@ -42,6 +42,9 @@ CREATE TABLE public.campaigns (
   is_featured BOOLEAN DEFAULT false,
   is_verified BOOLEAN DEFAULT false,
   verification_notes TEXT,
+  account_name TEXT,
+  account_number TEXT,
+  bank_name TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
