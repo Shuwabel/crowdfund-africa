@@ -101,8 +101,9 @@ export async function getCampaignById(id: string): Promise<CampaignWithStats | n
   }
 }
 
-export async function createCampaign(campaign: CampaignInsert): Promise<Campaign> {
-  const { data, error } = await supabase
+export async function createCampaign(campaign: CampaignInsert, client?: any): Promise<Campaign> {
+  const supabaseClient = client || supabase
+  const { data, error } = await supabaseClient
     .from('campaigns')
     .insert(campaign)
     .select()

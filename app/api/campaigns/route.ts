@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
       account_number: account_number || '',
       bank_name: bank_name || '',
       creator_id: user.id
-    })
+    }, supabase)
 
     return NextResponse.json({
       message: 'Campaign created successfully',
