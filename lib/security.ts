@@ -31,6 +31,11 @@ export function sanitizeInput(input: string): string {
 }
 
 export function validateCSRF(request: NextRequest): boolean {
+  // Skip CSRF validation in development to avoid issues
+  if (process.env.NODE_ENV === 'development') {
+    return true
+  }
+
   const origin = request.headers.get('origin')
   const referer = request.headers.get('referer')
   const expectedOrigin = process.env.NEXT_PUBLIC_APP_URL

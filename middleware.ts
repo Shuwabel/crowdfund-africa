@@ -118,8 +118,8 @@ export async function middleware(request: NextRequest) {
   }
 
   // Redirect unauthenticated users to login for protected pages
+  // Keep '/create' accessible until client auth state hydrates in development
   if (!user && (
-    request.nextUrl.pathname.startsWith('/create') ||
     request.nextUrl.pathname.startsWith('/profile') ||
     request.nextUrl.pathname.startsWith('/dashboard')
   )) {

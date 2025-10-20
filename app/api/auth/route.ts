@@ -1,34 +1,62 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { signUp, signIn, resetPassword, updatePassword, updateProfile } from '@/lib/auth'
+import { createServerClient } from '@supabase/ssr'
+import { signUp as signUpLib, signIn as signInLib, resetPassword, updatePassword, updateProfile } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
   try {
     const { action, ...data } = await request.json()
 
+    // Bind Supabase to this API route so auth cookies are set/cleared properly
+    const response = NextResponse.next()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return request.cookies.get(name)?.value
+          },
+          set(name: string, value: string, options: any) {
+            response.cookies.set({ name, value, ...options })
+          },
+          remove(name: string, options: any) {
+            response.cookies.set({ name, value: '', ...options })
+          },
+        },
+      }
+    )
+
     switch (action) {
       case 'signup':
-        const signupResult = await signUp(data.email, data.password, data.fullName)
+        // Create account (lib handles profile + auto-confirm for dev)
+        const signupResult = await signUpLib(data.email, data.password, data.fullName)
         if (signupResult.error) {
           return NextResponse.json(
             { message: signupResult.error.message },
             { status: 400 }
           )
         }
-        return NextResponse.json({ 
-          message: 'Account created successfully. Please check your email to verify your account.' 
+        // Ensure session exists after auto-confirm in development
+        await supabase.auth.signInWithPassword({ email: data.email, password: data.password })
+        return NextResponse.json({
+          message: 'Account created successfully',
         })
 
       case 'signin':
-        const signinResult = await signIn(data.email, data.password)
-        if (signinResult.error) {
+        // Perform sign-in with server-bound client to set cookies
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: data.email,
+          password: data.password,
+        })
+        if (signInError) {
           return NextResponse.json(
-            { message: signinResult.error.message },
+            { message: signInError.message },
             { status: 401 }
           )
         }
-        return NextResponse.json({ 
+        return NextResponse.json({
           message: 'Signed in successfully',
-          user: signinResult.data.user 
+          user: signInData.user,
         })
 
       case 'reset-password':
@@ -67,6 +95,10 @@ export async function POST(request: NextRequest) {
           message: 'Profile updated successfully',
           profile: updateProfileResult.data 
         })
+
+      case 'signout':
+        await supabase.auth.signOut()
+        return NextResponse.json({ message: 'Signed out' })
 
       default:
         return NextResponse.json(
