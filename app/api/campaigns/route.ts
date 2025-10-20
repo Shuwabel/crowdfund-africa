@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCampaigns, getCampaignById } from '@/lib/campaigns'
+import { getCampaigns, getCampaignById, createCampaign } from '@/lib/campaigns'
+import { createServerClient } from '@supabase/ssr'
 
 export async function GET(request: NextRequest) {
   try {
@@ -35,6 +36,86 @@ export async function GET(request: NextRequest) {
     console.error('Campaigns API error:', error)
     return NextResponse.json(
       { message: error instanceof Error ? error.message : 'Failed to fetch campaigns' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    // Create server client to get user session
+    const response = NextResponse.next()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return request.cookies.get(name)?.value
+          },
+          set(name: string, value: string, options: any) {
+            response.cookies.set({ name, value, ...options })
+          },
+          remove(name: string, options: any) {
+            response.cookies.set({ name, value: '', ...options })
+          },
+        },
+      }
+    )
+
+    // Check authentication
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json(
+        { message: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const body = await request.json()
+    const {
+      title,
+      category,
+      story,
+      images,
+      goal,
+      duration,
+      account_name,
+      account_number,
+      bank_name
+    } = body
+
+    // Validate required fields
+    if (!title || !category || !story || !goal) {
+      return NextResponse.json(
+        { message: 'Missing required fields: title, category, story, goal' },
+        { status: 400 }
+      )
+    }
+
+    // Create campaign
+    const campaign = await createCampaign({
+      title,
+      category,
+      story,
+      images: images || [],
+      goal: Number(goal),
+      duration: Number(duration) || 30,
+      account_name: account_name || '',
+      account_number: account_number || '',
+      bank_name: bank_name || '',
+      creator_id: user.id
+    })
+
+    return NextResponse.json({
+      message: 'Campaign created successfully',
+      campaign
+    })
+
+  } catch (error) {
+    console.error('Create campaign API error:', error)
+    return NextResponse.json(
+      { message: error instanceof Error ? error.message : 'Failed to create campaign' },
       { status: 500 }
     )
   }
