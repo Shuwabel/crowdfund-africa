@@ -93,14 +93,20 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Calculate end_date from duration
+    const durationDays = Number(duration) || 30
+    const endDate = new Date()
+    endDate.setDate(endDate.getDate() + durationDays)
+
     // Create campaign
     const campaign = await createCampaign({
       title,
+      description: story.substring(0, 200) + (story.length > 200 ? '...' : ''), // Use first 200 chars as description
       category,
       story,
       images: images || [],
-      goal: Number(goal),
-      duration: Number(duration) || 30,
+      goal_amount: Number(goal),
+      end_date: endDate.toISOString(),
       account_name: account_name || '',
       account_number: account_number || '',
       bank_name: bank_name || '',
