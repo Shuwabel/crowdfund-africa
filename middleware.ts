@@ -1,4 +1,4 @@
-import { createMiddlewareClient } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { 
@@ -14,7 +14,32 @@ import {
 
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next()
-  const supabase = createMiddlewareClient({ req: request, res: response })
+  
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value
+        },
+        set(name: string, value: string, options: any) {
+          response.cookies.set({
+            name,
+            value,
+            ...options,
+          })
+        },
+        remove(name: string, options: any) {
+          response.cookies.set({
+            name,
+            value: '',
+            ...options,
+          })
+        },
+      },
+    }
+  )
 
   const ip = getClientIP(request)
   const userAgent = request.headers.get('user-agent') || ''
