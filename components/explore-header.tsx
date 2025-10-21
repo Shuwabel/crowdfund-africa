@@ -100,7 +100,18 @@ export function ExploreHeader() {
           ) : (
             <>
               <Link href="/auth/login">
-                <Button variant="ghost" className="rounded-xl">Sign In</Button>
+                <Button 
+                  variant="ghost" 
+                  className="rounded-xl"
+                  onClick={(e) => {
+                    // If user is already signed in, prevent navigation
+                    if (user) {
+                      e.preventDefault()
+                    }
+                  }}
+                >
+                  Sign In
+                </Button>
               </Link>
               <Link href="/create">
                 <Button className="hidden rounded-xl sm:inline-flex">Start Campaign</Button>

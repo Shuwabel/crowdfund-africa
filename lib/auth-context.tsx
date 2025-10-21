@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import { createBrowserClient } from '@supabase/ssr'
+import { supabase } from '@/lib/supabase'
 import { AuthUser } from '@/lib/auth'
 
 interface AuthContextType {
@@ -17,11 +17,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Create browser client that can read cookies
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  )
+  // Use the singleton supabase client
+  // const supabase = createBrowserClient(
+  //   process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  //   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  // )
 
   const refreshUser = async () => {
     try {
@@ -61,22 +61,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    // Get initial session
-    refreshUser().finally(() => setLoading(false))
+    let mounted = true
+
+    const initializeAuth = async () => {
+      try {
+        // Get initial session
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.error('Error getting session:', error)
+          if (mounted) setUser(null)
+          return
+        }
+
+        if (session?.user) {
+          // User is signed in, fetch profile
+          await refreshUser()
+        } else {
+          // No session, user is not signed in
+          if (mounted) setUser(null)
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error)
+        if (mounted) setUser(null)
+      } finally {
+        if (mounted) setLoading(false)
+      }
+    }
+
+    initializeAuth()
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.id)
+        
+        if (!mounted) return
+
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          await refreshUser()
+          if (session?.user) {
+            await refreshUser()
+          }
         } else if (event === 'SIGNED_OUT') {
           setUser(null)
         }
+        
         setLoading(false)
       }
     )
 
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   return (

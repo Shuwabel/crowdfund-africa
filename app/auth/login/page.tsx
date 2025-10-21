@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useAuth } from "@/lib/auth-context"
-import { createBrowserClient } from '@supabase/ssr'
+import { supabase } from "@/lib/supabase"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -27,12 +27,7 @@ export default function LoginPage() {
     setError("")
 
     try {
-      // Use browser client for direct login
-      const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      )
-
+      // Use the singleton supabase client
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password
