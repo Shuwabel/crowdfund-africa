@@ -22,7 +22,15 @@ export function CampaignHero({ campaign }: CampaignHeroProps) {
   return (
     <Card className="overflow-hidden rounded-2xl border-2">
       <div className="relative h-[400px] overflow-hidden bg-muted">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/30" />
+        {campaign.image ? (
+          <img
+            src={campaign.image}
+            alt={campaign.title}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-accent/30" />
+        )}
         <Badge className="absolute left-4 top-4 rounded-lg bg-card/90 text-card-foreground backdrop-blur">
           {campaign.category}
         </Badge>

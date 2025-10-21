@@ -4,65 +4,80 @@ import { CampaignActions } from "@/components/campaign-actions"
 import { CampaignTabs } from "@/components/campaign-tabs"
 import { DonorList } from "@/components/donor-list"
 import { ExploreHeader } from "@/components/explore-header"
+import { getCampaignById } from "@/lib/campaigns"
+import { notFound } from "next/navigation"
 
-// Mock data - in real app, fetch based on params.id
-const campaignData = {
-  id: 1,
-  title: "Clean Water for Rural Communities",
-  creator: {
-    name: "Water for Life Foundation",
-    verified: true,
-    avatar: "/creator-avatar.jpg",
-    campaigns: 12,
-    followers: 3456,
-  },
-  image: "/campaign-water-well.jpg",
-  video: null,
-  raised: 2500000,
-  goal: 5000000,
-  supporters: 1234,
-  daysLeft: 45,
-  category: "Community",
-  story: `We are working to bring clean, safe drinking water to 15 rural communities in Northern Nigeria. 
-
-Over 5,000 families currently walk 3-5 kilometers daily to access water, and the available sources are often contaminated, leading to waterborne diseases.
-
-Our project will:
-• Drill 5 new boreholes in strategic locations
-• Install solar-powered pumps for sustainability
-• Train local maintenance teams
-• Provide water storage solutions for each community
-
-Every donation brings us closer to transforming these communities. With your support, children can spend more time in school instead of fetching water, and families can focus on building better futures.`,
-  updates: [
-    {
-      id: 1,
-      date: "2025-01-15",
-      title: "First borehole completed!",
-      content:
-        "We're excited to share that the first borehole has been successfully drilled and is now providing clean water to 350 families.",
-    },
-  ],
-  comments: 89,
+interface CampaignPageProps {
+  params: Promise<{
+    id: string
+  }>
 }
 
-export default function CampaignPage() {
-  return (
-    <main className="min-h-screen bg-background">
-      <ExploreHeader />
-      <div className="container mx-auto px-4 py-6">
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="space-y-6 lg:col-span-2">
-            <CampaignHero campaign={campaignData} />
-            <CampaignTabs campaign={campaignData} />
-          </div>
-          <div className="space-y-6">
-            <CampaignStats campaign={campaignData} />
-            <CampaignActions campaignId={campaignData.id} />
-            <DonorList campaignId={campaignData.id} />
+export default async function CampaignPage({ params }: CampaignPageProps) {
+  const { id } = await params
+  
+  try {
+    const campaign = await getCampaignById(id)
+    
+    if (!campaign) {
+      notFound()
+    }
+
+    // Calculate days left
+    const endDate = new Date(campaign.end_date || '')
+    const now = new Date()
+    const daysLeft = Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)))
+
+    // Transform campaign data to match component expectations
+    const campaignData = {
+      id: campaign.id,
+      title: campaign.title,
+      creator: {
+        name: campaign.creator?.full_name || 'Anonymous',
+        verified: campaign.creator?.is_verified || false,
+        avatar: campaign.creator?.avatar_url || '/placeholder-user.jpg',
+        campaigns: 0, // This would need to be calculated separately
+        followers: 0, // This would need to be calculated separately
+      },
+      image: campaign.featured_image_url || (campaign.images && campaign.images.length > 0 ? campaign.images[0] : '/campaign-water-well.jpg'),
+      video: campaign.video_url,
+      raised: campaign.current_amount,
+      goal: campaign.goal_amount,
+      supporters: campaign.supporters_count || 0,
+      daysLeft,
+      category: campaign.category,
+      story: campaign.story,
+      updates: [], // This would need to be fetched separately
+      comments: campaign.comments_count || 0,
+      description: campaign.description,
+      images: campaign.images || [],
+      is_featured: campaign.is_featured,
+      is_verified: campaign.is_verified,
+      status: campaign.status,
+      created_at: campaign.created_at,
+      end_date: campaign.end_date,
+    }
+
+    return (
+      <main className="min-h-screen bg-background">
+        <ExploreHeader />
+        <div className="container mx-auto px-4 py-6">
+          <CampaignHero campaign={campaignData} />
+          <div className="mt-8 grid gap-8 lg:grid-cols-3">
+            <div className="lg:col-span-2">
+              <CampaignTabs campaign={campaignData} />
+            </div>
+            <div className="space-y-6">
+              <CampaignStats campaign={campaignData} />
+              <CampaignActions campaign={campaignData} />
+              <DonorList campaignId={campaign.id} />
+            </div>
           </div>
         </div>
-      </div>
-    </main>
-  )
+      </main>
+    )
+  } catch (error) {
+    console.error('Error fetching campaign:', error)
+    notFound()
+  }
 }
