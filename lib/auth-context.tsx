@@ -57,11 +57,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Get initial session
     const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (session?.user) {
-        await refreshUser()
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.error('Session error:', error)
+          setUser(null)
+          setLoading(false)
+          return
+        }
+
+        if (session?.user) {
+          // User is signed in, fetch profile
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single()
+
+          if (profileError) {
+            console.error('Profile error:', profileError)
+            setUser(null)
+          } else {
+            setUser({
+              id: session.user.id,
+              email: session.user.email!,
+              profile
+            })
+          }
+        } else {
+          setUser(null)
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error)
+        setUser(null)
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
 
     getInitialSession()
@@ -70,7 +102,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' && session?.user) {
-          await refreshUser()
+          // Fetch profile for signed in user
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single()
+
+          if (profileError) {
+            console.error('Profile error:', profileError)
+            setUser(null)
+          } else {
+            setUser({
+              id: session.user.id,
+              email: session.user.email!,
+              profile
+            })
+          }
         } else if (event === 'SIGNED_OUT') {
           setUser(null)
         }
