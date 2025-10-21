@@ -34,18 +34,12 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const user = await getCurrentUser()
-    if (!user) {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
-
+    
     const commentData = await request.json()
     
     const comment = await createComment({
       ...commentData,
-      user_id: user.id
+      donor_id: user?.id || null // Allow null for guest comments
     })
 
     return NextResponse.json(comment, { status: 201 })

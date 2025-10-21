@@ -1,8 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { createServerClient } from '@supabase/ssr'
 
 export async function POST(request: NextRequest) {
   try {
+    const response = NextResponse.next()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          get(name: string) {
+            return request.cookies.get(name)?.value
+          },
+          set(name: string, value: string, options: any) {
+            response.cookies.set({ name, value, ...options })
+          },
+          remove(name: string, options: any) {
+            response.cookies.set({ name, value: '', ...options })
+          },
+        },
+      }
+    )
+
+    // Get current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
     const { campaignId, amount, paystackAmount, message, isAnonymous, paymentMethod } = await request.json()
 
     if (!campaignId || !amount) {
@@ -34,6 +57,7 @@ export async function POST(request: NextRequest) {
       .from('donations')
       .insert({
         campaign_id: campaignId,
+        donor_id: user?.id || null, // Include donor_id if user is signed in
         amount: amount, // Store original amount in naira
         message: message || null,
         is_anonymous: isAnonymous || false,
