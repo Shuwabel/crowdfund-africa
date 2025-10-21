@@ -3,12 +3,52 @@ import { supabaseAdmin } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
-    const { amount, email, reference, metadata } = await request.json()
+    const { campaignId, amount, message, isAnonymous, paymentMethod } = await request.json()
 
-    if (!amount || !email || !reference) {
+    if (!campaignId || !amount) {
       return NextResponse.json(
-        { message: 'Missing required fields' },
+        { message: 'Missing required fields: campaignId and amount' },
         { status: 400 }
+      )
+    }
+
+    // Generate a unique reference for this donation
+    const reference = `donation_${campaignId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+    // Get campaign details
+    const { data: campaign, error: campaignError } = await supabaseAdmin
+      .from('campaigns')
+      .select('title, creator_id')
+      .eq('id', campaignId)
+      .single()
+
+    if (campaignError || !campaign) {
+      return NextResponse.json(
+        { message: 'Campaign not found' },
+        { status: 404 }
+      )
+    }
+
+    // Create donation record in database
+    const { data: donation, error: donationError } = await supabaseAdmin
+      .from('donations')
+      .insert({
+        campaign_id: campaignId,
+        amount: amount,
+        message: message || null,
+        is_anonymous: isAnonymous || false,
+        payment_method: paymentMethod || 'card',
+        payment_reference: reference,
+        status: 'pending'
+      })
+      .select()
+      .single()
+
+    if (donationError) {
+      console.error('Error creating donation:', donationError)
+      return NextResponse.json(
+        { message: 'Failed to create donation record' },
+        { status: 500 }
       )
     }
 
@@ -20,10 +60,14 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        amount: amount * 100, // Convert to kobo
-        email,
+        amount: amount, // Amount is already in kobo
+        email: 'donor@fundafrica.com', // We'll use a generic email for now
         reference,
-        metadata,
+        metadata: {
+          campaign_id: campaignId,
+          donation_id: donation.id,
+          campaign_title: campaign.title
+        },
         callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/paystack/callback`,
         channels: ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer']
       })

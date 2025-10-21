@@ -24,12 +24,47 @@ export function DonationForm({ campaignId }: DonationFormProps) {
   const [paymentMethod, setPaymentMethod] = useState("card")
   const [showSuccess, setShowSuccess] = useState(false)
 
-  const handleDonate = () => {
-    // Simulate donation processing
-    setShowSuccess(true)
-    setTimeout(() => {
-      // Redirect or show success state
-    }, 2000)
+  const handleDonate = async () => {
+    if (!amount && !customAmount) {
+      alert('Please enter a donation amount')
+      return
+    }
+
+    const donationAmount = customAmount ? parseFloat(customAmount) : parseFloat(amount)
+    
+    if (donationAmount <= 0) {
+      alert('Please enter a valid donation amount')
+      return
+    }
+
+    try {
+      // Initialize Paystack payment
+      const response = await fetch('/api/payments/paystack/initialize', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          campaignId,
+          amount: donationAmount * 100, // Convert to kobo (Paystack expects amount in smallest currency unit)
+          message: message || '',
+          isAnonymous: isAnonymous,
+          paymentMethod: paymentMethod
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to initialize payment')
+      }
+
+      // Redirect to Paystack payment page
+      window.location.href = data.authorization_url
+    } catch (error) {
+      console.error('Payment initialization error:', error)
+      alert(error instanceof Error ? error.message : 'Failed to process donation')
+    }
   }
 
   if (showSuccess) {
