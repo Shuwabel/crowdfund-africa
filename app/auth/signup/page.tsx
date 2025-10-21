@@ -9,7 +9,6 @@ import { Card } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 import Link from "next/link"
-import { useAuth } from "@/lib/auth-context"
 
 export default function SignupPage() {
   const [formData, setFormData] = useState({
@@ -24,7 +23,6 @@ export default function SignupPage() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
   const router = useRouter()
-  const { refreshUser } = useAuth()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
@@ -70,10 +68,10 @@ export default function SignupPage() {
         throw new Error(data.message)
       }
 
-      // Refresh the auth context to sync with server session
-      await refreshUser()
-      
       setSuccess(true)
+      setTimeout(() => {
+        router.push('/explore')
+      }, 2000)
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Signup failed')
     } finally {
@@ -86,18 +84,14 @@ export default function SignupPage() {
       <main className="min-h-screen bg-background flex items-center justify-center p-4">
         <Card className="w-full max-w-md p-8">
           <div className="text-center space-y-4">
-            <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+                <span className="text-lg font-bold text-primary-foreground">F</span>
+              </div>
+              <span className="text-xl font-bold text-primary">FundAfrica</span>
             </div>
-            <h1 className="text-2xl font-bold text-foreground">Account created successfully!</h1>
-            <p className="text-muted-foreground">
-              Please check your email to verify your account before signing in.
-            </p>
-            <Button onClick={() => router.push('/auth/login')} className="w-full">
-              Go to Sign In
-            </Button>
+            <h1 className="text-2xl font-bold text-foreground">Account Created!</h1>
+            <p className="text-muted-foreground">Redirecting you to the platform...</p>
           </div>
         </Card>
       </main>
@@ -116,7 +110,7 @@ export default function SignupPage() {
               <span className="text-xl font-bold text-primary">FundAfrica</span>
             </Link>
             <h1 className="text-2xl font-bold text-foreground">Create your account</h1>
-            <p className="text-muted-foreground">Join FundAfrica to start making a difference</p>
+            <p className="text-muted-foreground">Join our community of changemakers</p>
           </div>
 
           {error && (
@@ -136,7 +130,6 @@ export default function SignupPage() {
                 value={formData.fullName}
                 onChange={handleChange}
                 required
-                disabled={loading}
               />
             </div>
 
@@ -150,7 +143,6 @@ export default function SignupPage() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                disabled={loading}
               />
             </div>
 
@@ -165,15 +157,13 @@ export default function SignupPage() {
                   value={formData.password}
                   onChange={handleChange}
                   required
-                  disabled={loading}
                 />
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon"
+                  size="sm"
                   className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
-                  disabled={loading}
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -195,15 +185,13 @@ export default function SignupPage() {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   required
-                  disabled={loading}
                 />
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon"
+                  size="sm"
                   className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  disabled={loading}
                 >
                   {showConfirmPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -239,4 +227,3 @@ export default function SignupPage() {
     </main>
   )
 }
-

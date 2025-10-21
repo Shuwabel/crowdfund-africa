@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -9,7 +9,6 @@ import { Card } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 import Link from "next/link"
-import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/lib/supabase"
 
 export default function LoginPage() {
@@ -19,14 +18,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
-  const { user, loading: authLoading } = useAuth()
-
-  // Redirect if user is already authenticated
-  useEffect(() => {
-    if (!authLoading && user) {
-      router.push('/explore')
-    }
-  }, [user, authLoading, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,8 +25,7 @@ export default function LoginPage() {
     setError("")
 
     try {
-      // Use the singleton supabase client
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password
       })
@@ -44,9 +34,7 @@ export default function LoginPage() {
         throw new Error(error.message)
       }
 
-      // The auth context will automatically handle the state change
-      // No need to manually refresh user
-      
+      // Redirect to explore page
       router.push('/explore')
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Login failed')
@@ -70,19 +58,13 @@ export default function LoginPage() {
             <p className="text-muted-foreground">Sign in to your account</p>
           </div>
 
-          {authLoading ? (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">Checking authentication...</p>
-            </div>
-          ) : (
-            <>
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -92,7 +74,6 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                disabled={loading}
               />
             </div>
 
@@ -106,15 +87,13 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  disabled={loading}
                 />
                 <Button
                   type="button"
                   variant="ghost"
-                  size="icon"
+                  size="sm"
                   className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
                   onClick={() => setShowPassword(!showPassword)}
-                  disabled={loading}
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -123,15 +102,6 @@ export default function LoginPage() {
                   )}
                 </Button>
               </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <Link
-                href="/auth/forgot-password"
-                className="text-sm text-primary hover:underline"
-              >
-                Forgot password?
-              </Link>
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
@@ -144,21 +114,18 @@ export default function LoginPage() {
                 "Sign in"
               )}
             </Button>
-              </form>
+          </form>
 
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground">
-                  Don't have an account?{" "}
-                  <Link href="/auth/signup" className="text-primary hover:underline">
-                    Sign up
-                  </Link>
-                </p>
-              </div>
-            </>
-          )}
+          <div className="text-center">
+            <p className="text-sm text-muted-foreground">
+              Don't have an account?{" "}
+              <Link href="/auth/signup" className="text-primary hover:underline">
+                Sign up
+              </Link>
+            </p>
+          </div>
         </div>
       </Card>
     </main>
   )
 }
-
