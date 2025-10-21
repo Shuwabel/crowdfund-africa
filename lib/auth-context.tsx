@@ -19,13 +19,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUser = async () => {
     try {
-      console.log('Refreshing user...')
       const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
       
-      console.log('Auth user check:', { user: !!authUser, error: authError, userId: authUser?.id })
-      
       if (authError || !authUser) {
-        console.log('No auth user found, setting user to null')
         setUser(null)
         return
       }
@@ -36,15 +32,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('id', authUser.id)
         .single()
 
-      console.log('Profile check:', { profile: !!profile, error: profileError })
-
       if (profileError) {
         console.error('Error fetching profile:', profileError)
         setUser(null)
         return
       }
 
-      console.log('Setting user:', { id: authUser.id, email: authUser.email })
       setUser({
         id: authUser.id,
         email: authUser.email!,
@@ -62,64 +55,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    let mounted = true
-
-    const initializeAuth = async () => {
-      try {
-        console.log('Initializing auth...')
-        // Get initial session
-        const { data: { session }, error } = await supabase.auth.getSession()
-        
-        console.log('Session check result:', { session: !!session, error, userId: session?.user?.id })
-        
-        if (error) {
-          console.error('Error getting session:', error)
-          if (mounted) setUser(null)
-          return
-        }
-
-        if (session?.user) {
-          console.log('User found in session, fetching profile...')
-          // User is signed in, fetch profile
-          await refreshUser()
-        } else {
-          console.log('No session found, user not signed in')
-          // No session, user is not signed in
-          if (mounted) setUser(null)
-        }
-      } catch (error) {
-        console.error('Error initializing auth:', error)
-        if (mounted) setUser(null)
-      } finally {
-        if (mounted) setLoading(false)
+    // Get initial session
+    const getInitialSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        await refreshUser()
       }
+      setLoading(false)
     }
 
-    initializeAuth()
+    getInitialSession()
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.id)
-        
-        if (!mounted) return
-
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          if (session?.user) {
-            await refreshUser()
-          }
+        if (event === 'SIGNED_IN' && session?.user) {
+          await refreshUser()
         } else if (event === 'SIGNED_OUT') {
           setUser(null)
         }
-        
         setLoading(false)
       }
     )
 
-    return () => {
-      mounted = false
-      subscription.unsubscribe()
-    }
+    return () => subscription.unsubscribe()
   }, [])
 
   return (
@@ -136,4 +95,3 @@ export function useAuth() {
   }
   return context
 }
-
