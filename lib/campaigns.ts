@@ -76,11 +76,19 @@ export async function getCampaignById(id: string): Promise<CampaignWithStats | n
   }
 
   // Get additional stats
-  const [supportersResult, donationsResult, updatesResult, commentsResult] = await Promise.all([
+  const [
+    { count: supportersResult },
+    { count: donationsResult },
+    { count: updatesResult },
+    { count: commentsResult }
+  ] = await Promise.all([
     supabase
-      .from('campaign_follows')
-      .select('id', { count: 'exact' })
-      .eq('campaign_id', id),
+      .from('donations')
+      .select('donor_id', { count: 'exact' })
+      .eq('campaign_id', id)
+      .eq('status', 'completed')
+      .neq('is_anonymous', true)
+      .distinct('donor_id'),
     supabase
       .from('donations')
       .select('id', { count: 'exact' })
@@ -99,10 +107,10 @@ export async function getCampaignById(id: string): Promise<CampaignWithStats | n
 
   return {
     ...data,
-    supporters_count: supportersResult.count || 0,
-    donations_count: donationsResult.count || 0,
-    updates_count: updatesResult.count || 0,
-    comments_count: commentsResult.count || 0
+    supporters_count: supportersResult || 0,
+    donations_count: donationsResult || 0,
+    updates_count: updatesResult || 0,
+    comments_count: commentsResult || 0
   }
 }
 

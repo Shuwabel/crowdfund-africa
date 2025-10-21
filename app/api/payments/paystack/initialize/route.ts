@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
-    const { campaignId, amount, message, isAnonymous, paymentMethod } = await request.json()
+    const { campaignId, amount, paystackAmount, message, isAnonymous, paymentMethod } = await request.json()
 
     if (!campaignId || !amount) {
       return NextResponse.json(
@@ -29,12 +29,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create donation record in database
+    // Create donation record in database with original amount (in naira)
     const { data: donation, error: donationError } = await supabaseAdmin
       .from('donations')
       .insert({
         campaign_id: campaignId,
-        amount: amount,
+        amount: amount, // Store original amount in naira
         message: message || null,
         is_anonymous: isAnonymous || false,
         payment_method: paymentMethod || 'card',
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Initialize Paystack payment
+    // Initialize Paystack payment with kobo amount
     const paystackResponse = await fetch('https://api.paystack.co/transaction/initialize', {
       method: 'POST',
       headers: {
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        amount: amount, // Amount is already in kobo
+        amount: paystackAmount || amount * 100, // Use kobo amount for Paystack
         email: 'donor@fundafrica.com', // We'll use a generic email for now
         reference,
         metadata: {

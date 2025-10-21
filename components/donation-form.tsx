@@ -46,7 +46,8 @@ export function DonationForm({ campaignId }: DonationFormProps) {
         },
         body: JSON.stringify({
           campaignId,
-          amount: donationAmount * 100, // Convert to kobo (Paystack expects amount in smallest currency unit)
+          amount: donationAmount, // Store original amount in naira
+          paystackAmount: donationAmount * 100, // Convert to kobo for Paystack
           message: message || '',
           isAnonymous: isAnonymous,
           paymentMethod: paymentMethod
