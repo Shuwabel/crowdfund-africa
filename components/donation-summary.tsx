@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
+import { formatCurrency } from "@/lib/currency"
 import { Shield, Heart } from "lucide-react"
 
 interface DonationSummaryProps {
@@ -27,8 +28,8 @@ export function DonationSummary({ campaign }: DonationSummaryProps) {
           <div className="space-y-2">
             <Progress value={progress} className="h-2" />
             <div className="flex items-baseline justify-between text-sm">
-              <span className="font-bold text-foreground">₦{(campaign.raised / 1000000).toFixed(1)}M</span>
-              <span className="text-muted-foreground">of ₦{(campaign.goal / 1000000).toFixed(1)}M</span>
+              <span className="font-bold text-foreground">{formatCurrency(campaign.raised)}</span>
+              <span className="text-muted-foreground">of {formatCurrency(campaign.goal)}</span>
             </div>
           </div>
         </div>

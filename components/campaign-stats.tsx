@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Users, Calendar, Target } from "lucide-react"
+import { formatCurrency } from "@/lib/currency"
 
 interface CampaignStatsProps {
   campaign: {
@@ -18,9 +19,9 @@ export function CampaignStats({ campaign }: CampaignStatsProps) {
     <Card className="sticky top-20 space-y-6 rounded-2xl border-2 p-6">
       <div className="space-y-3">
         <div className="flex items-baseline gap-2">
-          <span className="text-4xl font-bold text-foreground">₦{(campaign.raised / 1000000).toFixed(1)}M</span>
+          <span className="text-4xl font-bold text-foreground">{formatCurrency(campaign.raised)}</span>
         </div>
-        <p className="text-sm text-muted-foreground">raised of ₦{(campaign.goal / 1000000).toFixed(1)}M goal</p>
+        <p className="text-sm text-muted-foreground">raised of {formatCurrency(campaign.goal)} goal</p>
         <Progress value={progress} className="h-3" />
       </div>
 

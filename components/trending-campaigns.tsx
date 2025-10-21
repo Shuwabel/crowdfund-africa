@@ -7,6 +7,7 @@ import { CheckCircle2, TrendingUp, Loader2 } from "lucide-react"
 import Link from "next/link"
 import { useState, useEffect } from "react"
 import { Campaign } from "@/lib/types"
+import { formatCurrencyWithGoal } from "@/lib/currency"
 
 interface TrendingCampaignsProps {
   category?: string
@@ -148,9 +149,8 @@ export function TrendingCampaigns({ category, search }: TrendingCampaignsProps) 
                     <div className="flex items-baseline justify-between text-sm">
                       <div>
                         <span className="text-base font-bold text-foreground">
-                          ₦{(campaign.current_amount / 1000).toFixed(0)}k
+                          {formatCurrencyWithGoal(campaign.current_amount, campaign.goal_amount)}
                         </span>
-                        <span className="text-muted-foreground"> raised of ₦{(campaign.goal_amount / 1000).toFixed(0)}k</span>
                       </div>
                       <span className="text-muted-foreground">{campaign.supporters_count || 0} supporters</span>
                     </div>
