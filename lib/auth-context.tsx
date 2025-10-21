@@ -17,17 +17,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null)
   const [loading, setLoading] = useState(true)
 
-  // Use the singleton supabase client
-  // const supabase = createBrowserClient(
-  //   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  //   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  // )
-
   const refreshUser = async () => {
     try {
+      console.log('Refreshing user...')
       const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
       
+      console.log('Auth user check:', { user: !!authUser, error: authError, userId: authUser?.id })
+      
       if (authError || !authUser) {
+        console.log('No auth user found, setting user to null')
         setUser(null)
         return
       }
@@ -38,12 +36,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('id', authUser.id)
         .single()
 
+      console.log('Profile check:', { profile: !!profile, error: profileError })
+
       if (profileError) {
         console.error('Error fetching profile:', profileError)
         setUser(null)
         return
       }
 
+      console.log('Setting user:', { id: authUser.id, email: authUser.email })
       setUser({
         id: authUser.id,
         email: authUser.email!,
@@ -65,8 +66,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const initializeAuth = async () => {
       try {
+        console.log('Initializing auth...')
         // Get initial session
         const { data: { session }, error } = await supabase.auth.getSession()
+        
+        console.log('Session check result:', { session: !!session, error, userId: session?.user?.id })
         
         if (error) {
           console.error('Error getting session:', error)
@@ -75,9 +79,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (session?.user) {
+          console.log('User found in session, fetching profile...')
           // User is signed in, fetch profile
           await refreshUser()
         } else {
+          console.log('No session found, user not signed in')
           // No session, user is not signed in
           if (mounted) setUser(null)
         }
