@@ -44,7 +44,7 @@ export function TrendingCampaigns({ category, search }: TrendingCampaignsProps) 
         
         const data = await response.json()
         // Sort by supporters count to show trending campaigns
-        const sortedData = data.sort((a: Campaign, b: Campaign) => (b.supporters_count || 0) - (a.supporters_count || 0))
+        const sortedData = data.sort((a: Campaign, b: Campaign) => ((b as any).supporters_count || 0) - ((a as any).supporters_count || 0))
         setCampaigns(sortedData)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to fetch campaigns')
@@ -127,7 +127,7 @@ export function TrendingCampaigns({ category, search }: TrendingCampaignsProps) 
                   <Badge className="absolute right-3 top-3 rounded-lg bg-card/90 text-card-foreground backdrop-blur">
                     {campaign.category}
                   </Badge>
-                  {(campaign.supporters_count || 0) > 50 && (
+                  {((campaign as any).supporters_count || 0) > 50 && (
                     <Badge className="absolute left-3 top-3 rounded-lg bg-orange-500/90 text-white backdrop-blur">
                       <TrendingUp className="mr-1 h-3 w-3" />
                       Trending
@@ -141,7 +141,7 @@ export function TrendingCampaigns({ category, search }: TrendingCampaignsProps) 
                     </h3>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>by {campaign.creator?.full_name || 'Anonymous'}</span>
+                    <span>by {(campaign as any).creator?.full_name || 'Anonymous'}</span>
                     {campaign.is_verified && <CheckCircle2 className="h-4 w-4 text-primary" />}
                   </div>
                   <div className="space-y-2">
@@ -152,7 +152,7 @@ export function TrendingCampaigns({ category, search }: TrendingCampaignsProps) 
                           {formatCurrencyWithGoal(campaign.current_amount, campaign.goal_amount)}
                         </span>
                       </div>
-                      <span className="text-muted-foreground">{campaign.supporters_count || 0} supporters</span>
+                      <span className="text-muted-foreground">{(campaign as any).supporters_count || 0} supporters</span>
                     </div>
                   </div>
                 </div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getComments, createComment, updateComment, deleteComment } from '@/lib/comments'
 import { getCurrentUser } from '@/lib/auth'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export async function GET(request: NextRequest) {
   try {
@@ -33,16 +34,32 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await getCurrentUser()
+    // Try to get current user, but don't require authentication
+    let user = null
+    try {
+      user = await getCurrentUser()
+    } catch (error) {
+      // User is not authenticated, which is fine for guest comments
+      console.log('Guest comment - no authenticated user')
+    }
     
     const commentData = await request.json()
     
-    const comment = await createComment({
-      ...commentData,
-      donor_id: user?.id || null // Allow null for guest comments
-    })
+    // Use admin client to bypass RLS for guest comments
+    const { data, error } = await supabaseAdmin
+      .from('comments')
+      .insert({
+        ...commentData,
+        user_id: user?.id || '0723b49e-70b3-4b79-84fc-9276995387a0' // Use real guest user ID
+      })
+      .select()
+      .single()
 
-    return NextResponse.json(comment, { status: 201 })
+    if (error) {
+      throw new Error(`Failed to create comment: ${error.message}`)
+    }
+
+    return NextResponse.json(data, { status: 201 })
   } catch (error) {
     console.error('Create comment error:', error)
     return NextResponse.json(

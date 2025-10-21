@@ -25,46 +25,51 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(new URL('/payment/success?status=error', request.url))
     }
 
-    // Update donation status in database
-    const { error: updateError } = await supabaseAdmin
+    // Check if donation is already completed to prevent duplicate processing
+    const { data: existingDonation } = await supabaseAdmin
       .from('donations')
-      .update({ 
-        status: 'completed',
-        transaction_id: verifyData.data.transaction_id
-      })
-      .eq('payment_reference', reference)
-
-    if (updateError) {
-      console.error('Error updating donation:', updateError)
-    }
-
-    // Update campaign current_amount
-    const { data: donation } = await supabaseAdmin
-      .from('donations')
-      .select('campaign_id, amount')
+      .select('status, campaign_id, amount')
       .eq('payment_reference', reference)
       .single()
 
-    if (donation) {
-      // Get current campaign amount and add donation amount
+    if (!existingDonation) {
+      return NextResponse.redirect(new URL('/payment/success?status=error', request.url))
+    }
+
+    // Only update if donation is not already completed
+    if (existingDonation.status !== 'completed') {
+      // Update donation status in database
+      const { error: updateError } = await supabaseAdmin
+        .from('donations')
+        .update({ 
+          status: 'completed',
+          transaction_id: verifyData.data.transaction_id
+        })
+        .eq('payment_reference', reference)
+
+      if (updateError) {
+        console.error('Error updating donation:', updateError)
+      }
+
+      // Update campaign current_amount
       const { data: campaign } = await supabaseAdmin
         .from('campaigns')
         .select('current_amount')
-        .eq('id', donation.campaign_id)
+        .eq('id', existingDonation.campaign_id)
         .single()
 
       if (campaign) {
         await supabaseAdmin
           .from('campaigns')
           .update({ 
-            current_amount: campaign.current_amount + donation.amount
+            current_amount: campaign.current_amount + existingDonation.amount
           })
-          .eq('id', donation.campaign_id)
+          .eq('id', existingDonation.campaign_id)
       }
     }
 
     // Redirect to success page
-    return NextResponse.redirect(new URL(`/payment/success?status=success&reference=${reference}&campaign_id=${donation?.campaign_id}`, request.url))
+    return NextResponse.redirect(new URL(`/payment/success?status=success&reference=${reference}&campaign_id=${existingDonation.campaign_id}`, request.url))
 
   } catch (error) {
     console.error('Callback error:', error)
@@ -103,25 +108,50 @@ export async function POST(request: NextRequest) {
     if (event.event === 'charge.success') {
       const { reference, amount, metadata } = event.data
 
-      // Update donation status
-      const { error } = await supabaseAdmin
+      // Check if donation is already completed to prevent duplicate processing
+      const { data: existingDonation } = await supabaseAdmin
         .from('donations')
-        .update({
-          status: 'completed',
-          transaction_id: event.data.id.toString(),
-          metadata: {
-            ...metadata,
-            paystack_data: event.data
-          }
-        })
+        .select('status, campaign_id, amount')
         .eq('payment_reference', reference)
+        .single()
 
-      if (error) {
-        console.error('Failed to update donation:', error)
-        return NextResponse.json(
-          { message: 'Failed to update donation' },
-          { status: 500 }
-        )
+      if (existingDonation && existingDonation.status !== 'completed') {
+        // Update donation status
+        const { error } = await supabaseAdmin
+          .from('donations')
+          .update({
+            status: 'completed',
+            transaction_id: event.data.id.toString(),
+            metadata: {
+              ...metadata,
+              paystack_data: event.data
+            }
+          })
+          .eq('payment_reference', reference)
+
+        if (error) {
+          console.error('Failed to update donation:', error)
+          return NextResponse.json(
+            { message: 'Failed to update donation' },
+            { status: 500 }
+          )
+        }
+
+        // Update campaign current_amount
+        const { data: campaign } = await supabaseAdmin
+          .from('campaigns')
+          .select('current_amount')
+          .eq('id', existingDonation.campaign_id)
+          .single()
+
+        if (campaign) {
+          await supabaseAdmin
+            .from('campaigns')
+            .update({ 
+              current_amount: campaign.current_amount + existingDonation.amount
+            })
+            .eq('id', existingDonation.campaign_id)
+        }
       }
     }
 

@@ -37,9 +37,27 @@ export async function getComments(campaignId: string, filters?: {
 
   if (!data) return []
 
+  // Process comments to handle guest comments
+  const processedComments = data.map(comment => ({
+    ...comment,
+    user: comment.user || {
+      id: '0723b49e-70b3-4b79-84fc-9276995387a0',
+      email: 'guest@example.com',
+      full_name: 'Guest User',
+      avatar_url: null,
+      phone_number: null,
+      bio: null,
+      location: null,
+      role: 'user' as const,
+      is_verified: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+  }))
+
   // Fetch replies for each comment
   const commentsWithReplies = await Promise.all(
-    data.map(async (comment) => {
+    processedComments.map(async (comment) => {
       const { data: replies } = await supabase
         .from('comments')
         .select(`
@@ -50,9 +68,27 @@ export async function getComments(campaignId: string, filters?: {
         .eq('is_deleted', false)
         .order('created_at', { ascending: true })
 
+      // Process replies to handle guest comments
+      const processedReplies = (replies || []).map(reply => ({
+        ...reply,
+        user: reply.user || {
+          id: '0723b49e-70b3-4b79-84fc-9276995387a0',
+          email: 'guest@example.com',
+          full_name: 'Guest User',
+          avatar_url: null,
+          phone_number: null,
+          bio: null,
+          location: null,
+          role: 'user' as const,
+          is_verified: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      }))
+
       return {
         ...comment,
-        replies: replies || []
+        replies: processedReplies
       }
     })
   )

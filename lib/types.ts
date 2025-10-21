@@ -199,7 +199,7 @@ export type Database = {
         Row: {
           id: string
           campaign_id: string
-          user_id: string
+          user_id: string | null
           content: string
           parent_id: string | null
           is_deleted: boolean
@@ -209,7 +209,7 @@ export type Database = {
         Insert: {
           id?: string
           campaign_id: string
-          user_id: string
+          user_id?: string | null
           content: string
           parent_id?: string | null
           is_deleted?: boolean
@@ -219,7 +219,7 @@ export type Database = {
         Update: {
           id?: string
           campaign_id?: string
-          user_id?: string
+          user_id?: string | null
           content?: string
           parent_id?: string | null
           is_deleted?: boolean
@@ -344,7 +344,7 @@ export type DonationWithDonor = Donation & {
 }
 
 export type CommentWithUser = Comment & {
-  user: Profile
+  user: Profile | null
   replies?: CommentWithUser[]
 }
 

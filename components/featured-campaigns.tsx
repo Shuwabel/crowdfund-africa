@@ -133,7 +133,7 @@ export function FeaturedCampaigns({ category, search }: FeaturedCampaignsProps) 
                     </h3>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>by {campaign.creator?.full_name || 'Anonymous'}</span>
+                    <span>by {(campaign as any).creator?.full_name || 'Anonymous'}</span>
                     {campaign.is_verified && <CheckCircle2 className="h-4 w-4 text-primary" />}
                   </div>
                   <div className="space-y-2">
@@ -144,7 +144,7 @@ export function FeaturedCampaigns({ category, search }: FeaturedCampaignsProps) 
                           {formatCurrencyWithGoal(campaign.current_amount, campaign.goal_amount)}
                         </span>
                       </div>
-                      <span className="text-muted-foreground">{campaign.supporters_count || 0} supporters</span>
+                      <span className="text-muted-foreground">{(campaign as any).supporters_count || 0} supporters</span>
                     </div>
                   </div>
                 </div>

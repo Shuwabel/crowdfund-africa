@@ -14,6 +14,7 @@ export async function getCampaigns(filters?: {
   category?: string
   featured?: boolean
   search?: string
+  creator_id?: string
   limit?: number
   offset?: number
 }): Promise<CampaignWithCreator[]> {
@@ -37,9 +38,13 @@ export async function getCampaigns(filters?: {
     query = query.eq('is_featured', filters.featured)
   }
 
-  if (filters?.search) {
-    query = query.or(`title.ilike.%${filters.search}%,story.ilike.%${filters.search}%,description.ilike.%${filters.search}%`)
-  }
+      if (filters?.search) {
+        query = query.or(`title.ilike.%${filters.search}%,story.ilike.%${filters.search}%,description.ilike.%${filters.search}%`)
+      }
+
+      if (filters?.creator_id) {
+        query = query.eq('creator_id', filters.creator_id)
+      }
 
   if (filters?.limit) {
     query = query.limit(filters.limit)
@@ -77,17 +82,10 @@ export async function getCampaignById(id: string): Promise<CampaignWithStats | n
 
   // Get additional stats
   const [
-    { data: supportersData },
     { count: donationsResult },
     { count: updatesResult },
     { count: commentsResult }
   ] = await Promise.all([
-    supabase
-      .from('donations')
-      .select('donor_id')
-      .eq('campaign_id', id)
-      .eq('status', 'completed')
-      .neq('is_anonymous', true),
     supabase
       .from('donations')
       .select('id', { count: 'exact' })
@@ -104,12 +102,12 @@ export async function getCampaignById(id: string): Promise<CampaignWithStats | n
       .eq('is_deleted', false)
   ])
 
-  // Count unique supporters
-  const uniqueSupporters = new Set(supportersData?.map(d => d.donor_id).filter(Boolean)).size
+  // Count supporters as total number of completed donations
+  const supportersCount = donationsResult || 0
 
   return {
     ...data,
-    supporters_count: uniqueSupporters,
+    supporters_count: supportersCount,
     donations_count: donationsResult || 0,
     updates_count: updatesResult || 0,
     comments_count: commentsResult || 0

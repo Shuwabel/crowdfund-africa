@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category')
     const featured = searchParams.get('featured')
     const search = searchParams.get('search')
+    const creator_id = searchParams.get('creator_id')
     const limit = searchParams.get('limit')
     const offset = searchParams.get('offset')
 
@@ -29,6 +30,7 @@ export async function GET(request: NextRequest) {
           category: category || undefined,
           featured: featured ? featured === 'true' : undefined,
           search: search || undefined,
+          creator_id: creator_id || undefined,
           limit: limit ? parseInt(limit) : undefined,
           offset: offset ? parseInt(offset) : undefined
         })

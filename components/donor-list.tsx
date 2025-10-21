@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Heart } from "lucide-react"
 
 interface DonorListProps {
-  campaignId: number
+  campaignId: string
 }
 
 const recentDonors = [

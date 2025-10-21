@@ -5,9 +5,11 @@ import { Card } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { MessageSquare, FileText, Bell } from "lucide-react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { CommentsSection } from "@/components/comments-section"
 
 interface CampaignTabsProps {
   campaign: {
+    id: string
     story: string
     updates: Array<{
       id: number
@@ -67,26 +69,7 @@ export function CampaignTabs({ campaign }: CampaignTabsProps) {
       </TabsContent>
 
       <TabsContent value="comments" className="mt-6">
-        <Card className="rounded-2xl p-6">
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex gap-3 border-b pb-4 last:border-0">
-                <Avatar className="h-10 w-10">
-                  <AvatarFallback className="bg-primary/10 text-primary">U{i}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold text-foreground">User {i}</span>
-                    <span className="text-xs text-muted-foreground">2 days ago</span>
-                  </div>
-                  <p className="text-sm leading-relaxed text-foreground">
-                    This is such an important cause. Thank you for the work you're doing!
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
+        <CommentsSection campaignId={campaign.id} />
       </TabsContent>
     </Tabs>
   )
