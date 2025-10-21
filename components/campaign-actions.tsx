@@ -6,7 +6,7 @@ import Link from "next/link"
 import { useState } from "react"
 
 interface CampaignActionsProps {
-  campaignId: number
+  campaignId: string
 }
 
 export function CampaignActions({ campaignId }: CampaignActionsProps) {

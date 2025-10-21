@@ -69,7 +69,7 @@ export default async function CampaignPage({ params }: CampaignPageProps) {
             </div>
             <div className="space-y-6">
               <CampaignStats campaign={campaignData} />
-              <CampaignActions campaign={campaignData} />
+              <CampaignActions campaignId={campaign.id} />
               <DonorList campaignId={campaign.id} />
             </div>
           </div>
