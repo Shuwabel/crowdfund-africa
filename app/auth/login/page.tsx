@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -19,7 +19,14 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
-  const { refreshUser } = useAuth()
+  const { user, loading: authLoading } = useAuth()
+
+  // Redirect if user is already authenticated
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.push('/explore')
+    }
+  }, [user, authLoading, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,8 +44,8 @@ export default function LoginPage() {
         throw new Error(error.message)
       }
 
-      // Refresh the auth context to sync with server session
-      await refreshUser()
+      // The auth context will automatically handle the state change
+      // No need to manually refresh user
       
       router.push('/explore')
     } catch (error) {
@@ -63,13 +70,19 @@ export default function LoginPage() {
             <p className="text-muted-foreground">Sign in to your account</p>
           </div>
 
-          {error && (
-            <Alert variant="destructive">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
+          {authLoading ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">Checking authentication...</p>
+            </div>
+          ) : (
+            <>
+              {error && (
+                <Alert variant="destructive">
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
@@ -131,16 +144,18 @@ export default function LoginPage() {
                 "Sign in"
               )}
             </Button>
-          </form>
+              </form>
 
-          <div className="text-center">
-            <p className="text-sm text-muted-foreground">
-              Don't have an account?{" "}
-              <Link href="/auth/signup" className="text-primary hover:underline">
-                Sign up
-              </Link>
-            </p>
-          </div>
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">
+                  Don't have an account?{" "}
+                  <Link href="/auth/signup" className="text-primary hover:underline">
+                    Sign up
+                  </Link>
+                </p>
+              </div>
+            </>
+          )}
         </div>
       </Card>
     </main>
