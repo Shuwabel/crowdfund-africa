@@ -52,12 +52,15 @@ export async function signUp(email: string, password: string, fullName: string) 
   if (data.user && !error) {
     // Create profile immediately since we're not using email verification
     // Use admin client to bypass RLS policies
+    // Use upsert to handle case where profile already exists
     const { error: profileError } = await supabaseAdmin
       .from('profiles')
-      .insert({ 
+      .upsert({ 
         id: data.user.id, 
         email: data.user.email!,
         full_name: fullName 
+      }, {
+        onConflict: 'id'
       })
 
     if (profileError) {
