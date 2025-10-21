@@ -13,7 +13,7 @@ import { CreditCard, Smartphone, Wallet } from "lucide-react"
 const suggestedAmounts = [5000, 10000, 25000, 50000, 100000]
 
 interface DonationFormProps {
-  campaignId: number
+  campaignId: string
 }
 
 export function DonationForm({ campaignId }: DonationFormProps) {
