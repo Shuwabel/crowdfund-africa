@@ -27,6 +27,34 @@ export async function POST(request: NextRequest) {
     )
 
     switch (action) {
+      case 'getCurrentUser':
+        const { data: { user }, error: userError } = await supabase.auth.getUser()
+        if (userError || !user) {
+          return NextResponse.json(
+            { message: 'Not authenticated' },
+            { status: 401 }
+          )
+        }
+        
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+        
+        if (profileError) {
+          return NextResponse.json(
+            { message: 'Profile not found' },
+            { status: 404 }
+          )
+        }
+        
+        return NextResponse.json({
+          id: user.id,
+          email: user.email,
+          profile
+        })
+
       case 'signup':
         // Create account (lib handles profile + auto-confirm for dev)
         const signupResult = await signUpLib(data.email, data.password, data.fullName)
