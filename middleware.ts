@@ -16,8 +16,8 @@ export async function middleware(request: NextRequest) {
   const response = NextResponse.next()
   
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://REDACTED.supabase.co',
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'REDACTED',
     {
       cookies: {
         get(name: string) {

@@ -9,8 +9,8 @@ export async function POST(request: NextRequest) {
     // Bind Supabase to this API route so auth cookies are set/cleared properly
     const response = NextResponse.next()
     const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://REDACTED.supabase.co',
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'REDACTED',
       {
         cookies: {
           get(name: string) {
