@@ -9,7 +9,6 @@ import { AuthProvider } from "@/lib/auth-context"
 export const metadata: Metadata = {
   title: "FundAfrica - Crowdfunding for African Communities",
   description: "Support dreams, change lives. A trusted crowdfunding platform for African communities.",
-  generator: "v0.app",
 }
 
 export default function RootLayout({
