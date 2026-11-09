@@ -1,84 +1,55 @@
-"use client"
+'use client'
 
-import { useEffect, useState } from "react"
-import { useSearchParams } from "next/navigation"
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { CheckCircle2, Loader2 } from "lucide-react"
-import Link from "next/link"
-import { ExploreHeader } from "@/components/explore-header"
+import Link from 'next/link'
+import { Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
+import { Check } from 'lucide-react'
+import { useStore } from '@/lib/store'
+import { formatDate, formatMoney } from '@/lib/logic'
+import { Empty } from '@/components/ui'
 
-export default function PaymentSuccessPage() {
-  const searchParams = useSearchParams()
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
-  const [message, setMessage] = useState('')
-
-  useEffect(() => {
-    const reference = searchParams.get('reference')
-    const status = searchParams.get('status')
-
-    if (status === 'success' && reference) {
-      setStatus('success')
-      setMessage('Your donation was successful! Thank you for your generosity.')
-    } else {
-      setStatus('error')
-      setMessage('Payment was not successful. Please try again.')
-    }
-  }, [searchParams])
-
-  if (status === 'loading') {
-    return (
-      <main className="min-h-screen bg-background">
-        <ExploreHeader />
-        <div className="container mx-auto px-4 py-8">
-          <div className="mx-auto max-w-md">
-            <Card className="rounded-2xl p-8 text-center">
-              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-              <h2 className="mb-2 text-2xl font-bold text-foreground">Processing Payment...</h2>
-              <p className="text-muted-foreground">Please wait while we verify your donation</p>
-            </Card>
-          </div>
-        </div>
-      </main>
-    )
-  }
-
+export default function SuccessPage() {
   return (
-    <main className="min-h-screen bg-background">
-      <ExploreHeader />
-      <div className="container mx-auto px-4 py-8">
-        <div className="mx-auto max-w-md">
-          <Card className="rounded-2xl p-8 text-center">
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary/10">
-              {status === 'success' ? (
-                <CheckCircle2 className="h-8 w-8 text-green-500" />
-              ) : (
-                <div className="h-8 w-8 rounded-full bg-red-500" />
-              )}
-            </div>
-            <h2 className={`mb-2 text-2xl font-bold ${status === 'success' ? 'text-green-600' : 'text-red-600'}`}>
-              {status === 'success' ? 'Donation Successful!' : 'Payment Failed'}
-            </h2>
-            <p className="mb-6 text-muted-foreground">{message}</p>
-            <div className="space-y-3">
-              <Link href="/explore">
-                <Button size="lg" className="w-full rounded-xl">
-                  Explore More Campaigns
-                </Button>
-              </Link>
-              {status === 'success' && (
-                <Link href={`/campaign/${searchParams.get('campaign_id')}`}>
-                  <Button variant="outline" size="lg" className="w-full rounded-xl bg-transparent">
-                    Back to Campaign
-                  </Button>
-                </Link>
-              )}
-            </div>
-          </Card>
-        </div>
+    <Suspense fallback={<p className="py-16 text-center text-ink-3">Loading receipt…</p>}>
+      <Receipt />
+    </Suspense>
+  )
+}
+
+function Receipt() {
+  const ref = useSearchParams().get('ref')
+  const donation = useStore((s) => s.donations.find((d) => d.reference === ref))
+  const campaign = useStore((s) => s.campaigns.find((c) => c.id === donation?.campaignId))
+  const hydrated = useStore((s) => s.hydrated)
+
+  if (!donation || !campaign) {
+    return hydrated ? <Empty title="No receipt found" body="This receipt is saved in the browser where the gift was made." href="/explore" cta="Browse campaigns" /> : <p className="py-16 text-center text-ink-3">Loading receipt…</p>
+  }
+  return (
+    <div className="mx-auto max-w-lg">
+      <p className="flex items-center gap-2 font-semibold text-brand"><Check size={18} strokeWidth={3} aria-hidden /> Demo gift recorded</p>
+      <h1 className="mt-2 text-3xl sm:text-4xl">Thank you, {donation.anonymous ? 'friend' : donation.name.split(' ')[0]}.</h1>
+      <p className="mt-3 text-ink-2">Your gift now appears in the campaign ledger. No money moved: this is a simulation.</p>
+
+      <dl className="mt-8 divide-y divide-line border-y border-line">
+        {[
+          ['Campaign', campaign.title],
+          ['Amount', formatMoney(donation.amount, donation.currency)],
+          ['Date', formatDate(donation.createdAt)],
+          ['Method', donation.method.replace('_', ' ')],
+          ['Reference', donation.reference],
+        ].map(([k, v]) => (
+          <div key={k} className="grid grid-cols-[7rem_1fr] gap-3 py-3">
+            <dt className="text-ink-3">{k}</dt>
+            <dd className="font-medium">{v}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <div className="mt-8 flex flex-wrap gap-3">
+        <Link href={`/campaign/${campaign.id}`} className="btn btn-primary">See the ledger</Link>
+        <Link href="/explore" className="btn btn-quiet">Find another campaign</Link>
       </div>
-    </main>
+    </div>
   )
 }
